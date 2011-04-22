@@ -1,4 +1,6 @@
 var http = require('http');
+var cluster = require('cluster');
+var multinode = require('./lib/multi-node');
 var url = require('url');
 
 PRODUCT_RPM = 40;
@@ -59,24 +61,23 @@ function isRateLimited(client, product){
         //register the new bucket in the rate : buckets map
         registerBucket(global_refill_rate, GlobalTokens[client]);
     }
-    /*if(!ProductTokens[productKey]){
+    if(!ProductTokens[productKey]){
         console.log('bucket for productkey \'' + productKey + '\' does not exist, creating it');
-        ProductTokens[productKey] 
-            = new TokenBucket(PRODUCT_RPM);
+        ProductTokens[productKey] = new TokenBucket(PRODUCT_RPM);
         registerBucket(product_refill_rate, ProductTokens[productKey]);
-    }*/
+    }
 
     if(!GlobalTokens[client].getToken()){
         console.log('hit global limit for ' + client);
-        return true;
+        return {limited:true,limittype:'global'};
     }
 
-    /*if(!ProductTokens[productKey].getToken()){
+    if(!ProductTokens[productKey].getToken()){
         console.log('hit product limit for ' + productKey);
-        return true;
-    }*/
+        return {limited:true,limittype:'product'};
+    }
 
-    return false;
+    return {limited:false};
 }
 
 console.log('global request per minute limit is: ' + GLOBAL_RPM);
@@ -89,7 +90,6 @@ FAIL_MESSAGE = 'missing client and/or product parameters\n';
 var s = http.createServer(function(req,res){
     var query = url.parse(req.url, true).query;
     if(!query.client || !query.product){
-        
         res.writeHead(400, 
         {
             'Content-Length': FAIL_MESSAGE.length,
@@ -98,22 +98,20 @@ var s = http.createServer(function(req,res){
         res.end(FAIL_MESSAGE);
         return;
     }
+    res.writeHead(200, { 'Content-Type':'application/json' });
     
-    var base = query.client +','+query.product +': was ';
-    res.writeHead(200, 
+    var result = isRateLimited(query.client,query.product);
+    if(result.limited)
     {
-        'Content-Type':'text/plain',
-        'Content-Length': base.length + 9,
-    });
-    var limited = isRateLimited(query.client,query.product);
-    if(limited)
-    {
-        res.end(base + 'DENIED  \n');
+        res.end(JSON.stringify({limited:true,limittype:result.limittype,client:query.client, product:query.product}));
     }
     else{
-        res.end(base+ 'ACCEPTED\n');
+        res.end(JSON.stringify({limited:false,limittype:result.limittype,client:query.client,product:query.product}));
     }
-
 });
 
+/*var nodes = multinode.listen({
+    port: 8000,
+    nodes: 2}, s);
+cluster(s).listen(8000);*/
 s.listen(8000);
