@@ -1,4 +1,5 @@
 var http = require('http');
+var url = require('url');
 
 PRODUCT_RPM = 40;
 GLOBAL_RPM = 100;
@@ -58,22 +59,22 @@ function isRateLimited(client, product){
         //register the new bucket in the rate : buckets map
         registerBucket(global_refill_rate, GlobalTokens[client]);
     }
-    if(!ProductTokens[productKey]){
+    /*if(!ProductTokens[productKey]){
         console.log('bucket for productkey \'' + productKey + '\' does not exist, creating it');
         ProductTokens[productKey] 
             = new TokenBucket(PRODUCT_RPM);
         registerBucket(product_refill_rate, ProductTokens[productKey]);
-    }
+    }*/
 
     if(!GlobalTokens[client].getToken()){
         console.log('hit global limit for ' + client);
         return true;
     }
 
-    if(!ProductTokens[productKey].getToken()){
+    /*if(!ProductTokens[productKey].getToken()){
         console.log('hit product limit for ' + productKey);
         return true;
-    }
+    }*/
 
     return false;
 }
@@ -83,33 +84,36 @@ console.log('product request per minute limit is: ' + PRODUCT_RPM);
 console.log('global refill rate will yield a new request every: ' + global_refill_rate + ' ms');
 console.log('product refill rate will yield a new request every: ' + product_refill_rate + ' ms');
 
-var test = function(client,product){
-    console.log(isRateLimited(client,product) ? client +' and ' + product + ' was rate limited' : client + ' and ' +  product + ' was NOT rate limited');
-}
 
-setInterval(function(){
-    test('client1','product1');
-},5000);
-
-
-var int2Count = 200;
-    
-var int2 = setInterval(function(){
-    if(int2Count-- == 0){ clearInterval(int2); return;}
-    test('client1','product2');
-},200);
-
-
-
-/*var s = http.createServer(function(req,res){
-    if(!req['product'] || !req['client']){
-        res.writeHead(400);
-        res.end('bad request, product and client parameters are required');
+FAIL_MESSAGE = 'missing client and/or product parameters\n';
+var s = http.createServer(function(req,res){
+    var query = url.parse(req.url, true).query;
+    if(!query.client || !query.product){
+        
+        res.writeHead(400, 
+        {
+            'Content-Length': FAIL_MESSAGE.length,
+            'Content-Type':'text/plain'
+        });
+        res.end(FAIL_MESSAGE);
+        return;
     }
-    res.writeHead(200, {'content-type':'text/plain'});
-    res.end(isRateLimited);
+    
+    var base = query.client +','+query.product +': was ';
+    res.writeHead(200, 
+    {
+        'Content-Type':'text/plain',
+        'Content-Length': base.length + 9,
+    });
+    var limited = isRateLimited(query.client,query.product);
+    if(limited)
+    {
+        res.end(base + 'DENIED  \n');
+    }
+    else{
+        res.end(base+ 'ACCEPTED\n');
+    }
+
 });
 
 s.listen(8000);
-*/
-
