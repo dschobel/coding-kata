@@ -21,7 +21,6 @@ function TokenBucket(limit){
    };
 }
 function refillEvent(rate){
-    console.log('refill event for rate: ' + rate);
     for(bucketIdx in RateToBucketsMap[rate]){
         //ToDo: cleanup full token buckets
         var bucket = RateToBucketsMap[rate][bucketIdx];
@@ -67,12 +66,12 @@ function isRateLimited(client, product){
     }
 
     if(!GlobalTokens[client].getToken()){
-        console.log('hit global limit');
+        console.log('hit global limit for ' + client);
         return true;
     }
 
     if(!ProductTokens[productKey].getToken()){
-        console.log('hit product limit');
+        console.log('hit product limit for ' + productKey);
         return true;
     }
 
@@ -84,13 +83,23 @@ console.log('product request per minute limit is: ' + PRODUCT_RPM);
 console.log('global refill rate will yield a new request every: ' + global_refill_rate + ' ms');
 console.log('product refill rate will yield a new request every: ' + product_refill_rate + ' ms');
 
+var test = function(client,product){
+    console.log(isRateLimited(client,product) ? client +' and ' + product + ' was rate limited' : client + ' and ' +  product + ' was NOT rate limited');
+}
 
 setInterval(function(){
-    console.log(isRateLimited('client1','product1') ? 'request for client1 and product1 was rate limit' : 'request for client1 and product1 was NOT rate limited');
-    console.log(isRateLimited('client1','product2') ? 'request for client1 and product2 was rate limit' : 'request for client1 and product2 was NOT rate limited');
-},500);
+    test('client1','product1');
+},5000);
 
+
+var int2Count = 200;
     
+var int2 = setInterval(function(){
+    if(int2Count-- == 0){ clearInterval(int2); return;}
+    test('client1','product2');
+},200);
+
+
 
 /*var s = http.createServer(function(req,res){
     if(!req['product'] || !req['client']){
