@@ -20,6 +20,8 @@ whereas a limited one will look like: {"limited":true,"limittype":"global","clie
 
 TESTING:
 
+if you get it running locally, "make test-global-limit" and "make test-product-limit" will demonstrate hitting both types of limits
+
 If you're not motivated to get the dependencies listed below, the application can be found at: http://codingkata.duostack.net/
 where you can hit it with apache bench: 'ab -n 1000 -c 100 -v 2 "http://codingkata.duostack.net/?product=p&client=c"'
 
@@ -32,7 +34,7 @@ node.js: http://nodejs.org/
 npm: http://npmjs.org/
 coffeescript: 'npm install coffee-script'
 
-if you're on os x and you have homebrew installed (https://github.com/mxcl/homebrew) you can just issue 'brew install node && curl http://npmjs.org/install.sh | sh && npm install coffee-script' to get all of the dependencies.
+if you're on os x and you have homebrew installed (https://github.com/mxcl/homebrew) you can issue 'brew install node && curl http://npmjs.org/install.sh | sh && npm install coffee-script' to get all of the dependencies.
 
 
 
@@ -40,4 +42,4 @@ PERFORMANCE:
 
 This solution handles approx 3k req/s when running locally on my fairly ancient macbook. The entire server runs in a single thread (ala nginx) so it should scale well (and preditably) by just plopping a load-balancer in front of a few instances of the application and moving the state to a KV data-store (like redis).
 
-Memory usage will be linear with the number of clients, products and distinct rate limits (since timers are reused for all clients/products at the same limit).
+Memory usage will be linear with the number of clients, products and distinct rate limits (timers are reused for all clients/products at the same limit).
