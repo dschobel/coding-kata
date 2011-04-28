@@ -1,34 +1,34 @@
 http = require('http')
-cluster = require('cluster')
-multinode = require('./lib/multi-node')
+#cluster = require('cluster')
 url = require('url')
 
 PRODUCT_RPM = 40
 GLOBAL_RPM = 100
-global_refill_rate = Math.round(GLOBAL_RPM /0.06)//convert to ms
+global_refill_rate = Math.round(GLOBAL_RPM /0.06)#convert to ms
 product_refill_rate = Math.round(PRODUCT_RPM/0.06)
 
 GlobalTokens = {}
 ProductTokens = {}
 RateToBucketsMap = {}
 IntervalIds ={}
+class TokenBucket
+    constructor : (@limit) ->
+        @tokens = @limit
 
-TokenBucket = (limit) -> 
-    this.Limit = this.Tokens = limit
-    this.getToken = () ->
-        if(this.Tokens < 1)
+    getToken:  () ->
+        if(@tokens < 1)
             return false
-        this.Tokens--
+        @tokens--
         return true
    
 refillEvent = (rate) ->
     for bucketIdx in RateToBucketsMap[rate]
-        //ToDo: cleanup full token buckets
+        #ToDo: cleanup full token buckets
         bucket = RateToBucketsMap[rate][bucketIdx]
-        bucket.Tokens = Math.min(bucket.Limit,bucket.Tokens +1)
+        bucket.Tokens = Math.min(bucket.limit, bucket.tokens +1)
 
-registerBucket = (rate,bucket) -> 
-        //if the map of timers doesn't have an instance for this rate, create it
+registerBucket = (rate,bucket) ->
+        #if the map of timers doesn't have an instance for this rate, create it
         if(!RateToBucketsMap[rate])
             console.log('first bucket at rate ' + rate + ', creating new entry in rate map')
             RateToBucketsMap[rate] = [bucket]
@@ -40,21 +40,21 @@ registerBucket = (rate,bucket) ->
 
         if(!IntervalIds[rate])
             console.log('bucket map does not contain a timer for rate: ' + rate)
-            //IntervalIds[rate] = 'foo'
+            #IntervalIds[rate] = 'foo'
             IntervalIds[rate] = setInterval(refillEvent,rate,rate)
         
         else
             console.log("reusing existing timer for rate:  #{ rate }")
 
 
-isRateLimited = (client, product) -> 
-    var productKey = client + product
+isRateLimited = (client, product) ->
+    productKey = client + product
 
-    //if the bucket for this client doesn't exist, create it
+    #if the bucket for this client doesn't exist, create it
     if(!GlobalTokens[client])
         console.log('bucket for client \'' + client + '\' does not exist, creating it')
         GlobalTokens[client] = new TokenBucket(GLOBAL_RPM)
-        //register the new bucket in the rate : buckets map
+        #register the new bucket in the rate : buckets map
         registerBucket(global_refill_rate, GlobalTokens[client])
     
     if(!ProductTokens[productKey])
@@ -85,15 +85,14 @@ FAIL_MESSAGE = "missing client and/or product parameters\n"
 s = http.createServer(
     (req,res) ->
         query = url.parse(req.url, true).query
-        if(!query.client || !query.product){
-            res.writeHead(400, 
+        if(!query.client || !query.product)
+            res.writeHead(400,
             {
                 "Content-Length": FAIL_MESSAGE.length,
                 "Content-Type":"text/plain"
             })
             res.end(FAIL_MESSAGE)
             return
-        }
         res.writeHead(200, { "Content-Type":"application/json" })
         
         result = isRateLimited(query.client,query.product)
@@ -103,10 +102,11 @@ s = http.createServer(
             res.end(JSON.stringify({limited:false,limittype:result.limittype,client:query.client,product:query.product}))
 )
 
+s.listen(8000)
+
 ###
 nodes = multinode.listen({
     port: 8000,
     nodes: 2}, s)
-cluster(s).listen(8000)*/
-s.listen(8000)
+cluster(s).listen(8000)
 ###
