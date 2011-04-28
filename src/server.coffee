@@ -62,14 +62,15 @@ isRateLimited = (client, product) ->
 
     if !GlobalTokens[client].getToken()
         console.log "hit global limit for #{client}"
-        return {limited:true,limittype:'global'}
+        return {limited:true, limittype:'global', globaltokens:GlobalTokens[client].tokens, producttokens:ProductTokens[productKey].tokens}
     
 
     if !ProductTokens[productKey].getToken()
         console.log "hit product limit for #{productKey}"
-        return {limited:true,limittype:'product'}
+        return {limited:true, limittype:'product', globaltokens:GlobalTokens[client].tokens, producttokens:ProductTokens[productKey].tokens}
 
-    return {limited:false}
+    return {limited:false, limittype:'none', globaltokens:GlobalTokens[client].tokens, producttokens:ProductTokens[productKey].tokens}
+
 
 console.log "global request per minute limit is: #{ GLOBAL_RPM}"
 console.log "product request per minute limit is: #{ PRODUCT_RPM}"
@@ -92,12 +93,8 @@ s = http.createServer(
         res.writeHead 200, { "Content-Type":"application/json" }
         
         result = isRateLimited query.client, query.product
-        if result.limited
-            response = JSON.stringify {limited:true,limittype:result.limittype,client:query.client, product:query.product}
-            res.end response
-        else
-            response = JSON.stringify {limited:false,limittype:result.limittype,client:query.client,product:query.product}
-            res.end response
+        response =  {limited:result.limited, limittype:result.limittype, client:query.client, product:query.product, globaltokens:result.globaltokens, producttokens:result.producttokens}
+        res.end JSON.stringify response
 )
 
 s.listen 8000
