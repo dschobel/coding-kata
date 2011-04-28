@@ -22,10 +22,10 @@ class TokenBucket
         return true
    
 refillEvent = (rate) ->
-    for bucketIdx in RateToBucketsMap[rate]
+    console.log "rate is #{rate}"
+    for bucket in RateToBucketsMap[rate]
         #ToDo: cleanup full token buckets
-        bucket = RateToBucketsMap[rate][bucketIdx]
-        bucket.Tokens = Math.min(bucket.limit, bucket.tokens +1)
+        bucket.tokens = Math.min bucket.limit, bucket.tokens+1
 
 registerBucket = (rate,bucket) ->
         #if the map of timers doesn't have an instance for this rate, create it
