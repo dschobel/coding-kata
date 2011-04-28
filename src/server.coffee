@@ -1,5 +1,4 @@
 http = require('http')
-#cluster = require('cluster')
 url = require('url')
 
 PRODUCT_RPM = 40
@@ -7,6 +6,7 @@ GLOBAL_RPM = 100
 global_refill_rate = Math.round(GLOBAL_RPM /0.06)#convert to ms
 product_refill_rate = Math.round(PRODUCT_RPM/0.06)
 
+FAIL_MESSAGE = "missing client and/or product parameters\n"
 GlobalTokens = {}
 ProductTokens = {}
 RateToBucketsMap = {}
@@ -23,7 +23,6 @@ class TokenBucket
    
 refillEvent = (rate) ->
     for bucket in RateToBucketsMap[rate]
-        #ToDo: cleanup full token buckets
         bucket.tokens = Math.min bucket.limit, bucket.tokens+1
 
 registerBucket = (rate,bucket) ->
@@ -78,7 +77,6 @@ console.log "global refill rate will yield a new request every:  #{ global_refil
 console.log "product refill rate will yield a new request every: #{ product_refill_rate } ms"
 
 
-FAIL_MESSAGE = "missing client and/or product parameters\n"
 s = http.createServer(
     (req,res) ->
         query = url.parse(req.url, true).query
