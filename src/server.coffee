@@ -1,7 +1,7 @@
 http = require('http')
 url = require('url')
 
-PRODUCT_RPM = 40
+PRODUCT_RPM = 75
 GLOBAL_RPM = 100
 global_refill_rate = Math.round(GLOBAL_RPM /0.06)#convert to ms
 product_refill_rate = Math.round(PRODUCT_RPM/0.06)
