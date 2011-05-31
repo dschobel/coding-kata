@@ -82,14 +82,17 @@ console.log "product refill rate will yield a new request every: #{ product_refi
 app = express.createServer()
 console.log 'created express server'
 console.log '__dirname is: ' + __dirname 
-app.configure(->
-  app.use(express.static(__dirname + "../../public"))
-  
-  
-  )
+app.configure(-> app.use(express.static(__dirname + "../../public")))
 
+count = 0
 
 app.listen 8001
+socket = io.listen(app)
+socket.on('connection', (client) ->
+							setInterval( ->
+								count++
+								client.send('message ' + count + ':hello from the server')
+							,2000))
 
 
 s = http.createServer(
