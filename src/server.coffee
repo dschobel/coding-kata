@@ -1,5 +1,8 @@
 http = require('http')
 url = require('url')
+io = require('socket.io');
+express = require('express');
+
 
 PRODUCT_RPM = 75
 GLOBAL_RPM = 100
@@ -75,6 +78,18 @@ console.log "global request per minute limit is: #{ GLOBAL_RPM}"
 console.log "product request per minute limit is: #{ PRODUCT_RPM}"
 console.log "global refill rate will yield a new request every:  #{ global_refill_rate }  ms"
 console.log "product refill rate will yield a new request every: #{ product_refill_rate } ms"
+
+app = express.createServer()
+console.log 'created express server'
+console.log '__dirname is: ' + __dirname 
+app.configure(->
+  app.use(express.static(__dirname + "../../public"))
+  
+  
+  )
+
+
+app.listen 8001
 
 
 s = http.createServer(
