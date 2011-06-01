@@ -97,9 +97,8 @@ app.get '/limiter', (req, res)->
 			res.writeHead(200, { "Content-Type":"application/json" })
 			result = isRateLimited query.client, query.product
 			response = {limited:result.limited, limittype:result.limittype, client:query.client, product:query.product, globaltokens:result.globaltokens, producttokens:result.producttokens}
-			msg = JSON.stringify response
-			res.end msg
-			message_all_clients msg
+			res.end JSON.stringify response
+			message_all_clients response
 
 message_all_clients = (message) ->
 									for socket in sockets

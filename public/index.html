@@ -6,8 +6,30 @@
 <script src="http://localhost:8000/js/client.js"></script>
 </head>
 <body onLoad='codingkata_client()'>
-this is my test page
-<div id='drawingArea'></div>
+<style>
+	.box{
+		margin: 5px;
+		padding: 5;
+		height:45px;
+		width: 98%;
+		border-style:solid;
+		border-color:black;
+		border-width:2px;
+	}
+	.blue{
+		background-color:blue;
+	}
+
+	.green{
+		background-color:green;
+	}
+</style>
+<div id='drawingArea'>
+<div class='box'>first box</div>
+<div class='box green'>second box</div>
+<div class='box'>third box</div>
+
+</div>
 </body>
 </html>
 
