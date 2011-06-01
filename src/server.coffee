@@ -84,35 +84,30 @@ console.log 'created express server'
 app.configure(-> app.use(express.static(__dirname + "../../public")))
 
 
-app.get('/limiter', (req, res)->
-        query = url.parse(req.url, true).query
-        if !query.client || !query.product
-            res.writeHead 400,
-            {
-                "Content-Length": FAIL_MESSAGE.length,
-                "Content-Type":"text/plain"
-            }
-            res.end FAIL_MESSAGE
-            return
-        res.writeHead 200, { "Content-Type":"application/json" }
-        
-        result = isRateLimited query.client, query.product
-        response =  {limited:result.limited, limittype:result.limittype, client:query.client, product:query.product, globaltokens:result.globaltokens, producttokens:result.producttokens}
-        res.end JSON.stringify response
-)
+app.get '/limiter', (req, res)->
+			query = url.parse(req.url, true).query
+			if !query.client || !query.product
+				res.writeHead 400,
+				{
+					"Content-Length": FAIL_MESSAGE.length,
+					"Content-Type":"text/plain"
+				}
+				res.end FAIL_MESSAGE
+				return
+			res.writeHead(200, { "Content-Type":"application/json" })
+			result = isRateLimited query.client, query.product
+			response = {limited:result.limited, limittype:result.limittype, client:query.client, product:query.product, globaltokens:result.globaltokens, producttokens:result.producttokens}
+			msg = JSON.stringify response
+			res.end msg
+			message_all_clients msg
 
 message_all_clients = (message) ->
 									for socket in sockets
 										socket.send(message)
 
 
-count = 0
 sockets = []
 
-setInterval(-> 
-				count++
-				message_all_clients('hello! ' + count)
-			, 2000)
 websocket = io.listen(app)
 websocket.on('connection', (socket) ->
 							sockets.push socket
