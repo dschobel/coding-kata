@@ -15,9 +15,9 @@ ProductTokens = {}
 RateToBucketsMap = {}
 IntervalIds ={}
 class TokenBucket
-    constructor : (@limit) ->
-        @tokens = @limit
-
+    constructor : (@id,@limit) ->
+					@id = @id
+					@tokens = @limit
     getToken:  () ->
         if @tokens < 1
             return false
@@ -25,8 +25,10 @@ class TokenBucket
         return true
    
 refillEvent = (rate) ->
-    for bucket in RateToBucketsMap[rate]
-        bucket.tokens = Math.min bucket.limit, bucket.tokens+1
+					for bucket in RateToBucketsMap[rate]
+						bucket.tokens = Math.min bucket.limit, bucket.tokens+1
+						message_all_clients JSON.stringify {id:bucket.id, tokens:bucket.tokens, limit:bucket.limit}
+						
 
 registerBucket = (rate,bucket) ->
         #if the map of timers doesn't have an instance for this rate, create it
@@ -52,13 +54,13 @@ isRateLimited = (client, product) ->
     #if the bucket for this client doesn't exist, create it
     if !GlobalTokens[client]
         console.log "bucket for client #{client} does not exist, creating it"
-        GlobalTokens[client] = new TokenBucket(GLOBAL_RPM)
+        GlobalTokens[client] = new TokenBucket(client,GLOBAL_RPM)
         #register the new bucket in the rate : buckets map
         registerBucket(global_refill_rate, GlobalTokens[client])
     
     if !ProductTokens[productKey]
         console.log "bucket for productkey #{productKey} does not exist, creating it"
-        ProductTokens[productKey] = new TokenBucket(PRODUCT_RPM)
+        ProductTokens[productKey] = new TokenBucket(productKey,PRODUCT_RPM)
         registerBucket(product_refill_rate, ProductTokens[productKey])
     
 
@@ -98,7 +100,6 @@ app.get '/limiter', (req, res)->
 			result = isRateLimited query.client, query.product
 			response = {limited:result.limited, limittype:result.limittype, client:query.client, product:query.product, globaltokens:result.globaltokens, producttokens:result.producttokens}
 			res.end JSON.stringify response
-			message_all_clients response
 
 message_all_clients = (message) ->
 									for socket in sockets

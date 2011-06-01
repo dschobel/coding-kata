@@ -7,39 +7,27 @@
 
  }
 
- function buildBox(id,tokens){
-	 return '<div id = "' + id +'" class="box">'+id+'<br/>tokens: '+tokens+'</div>';
+ function buildBox(id,tokens,limit){
+	 return '<div id = "' + id +'" class="box">'+id+'<br/>tokens: '+tokens+' / ' + limit+'</div>';
  }
 
- function buildHTML(id,tokens){
-	 return id+'<br/>tokens: '+tokens;
+ function buildHTML(id,tokens,limit){
+	 return id+'<br/>tokens: '+tokens + ' / ' + limit;
  }
 
 function drawData(data){
 	var json = JSON.parse(data);
-	var productid = json.client+json.product;
-	var clientid = json.client;
 
-	var productEl = $('#'+ productid)
-	var clientEl = $('#'+clientid)
+	var element = $('#'+json.id)
 	var da = $('#drawingArea');
 
-	if(productEl.length === 0)
+	if(element.length === 0)
 	{
-		da.append($(buildBox(productid,json.producttokens)));
+		da.append($(buildBox(json.id,json.tokens,json.limit)));
 	}
 	else
 	{
-		productEl.html(buildHTML(productid,json.producttokens));
+		element.html(buildHTML(json.id,json.tokens,json.limit));
+		element.width(json.tokens / json.limit * 100 + '%');
 	}
-
-	if(clientEl.length === 0)
-	{
-		da.append($(buildBox(clientid,json.globaltokens)));
-	}
-	else
-	{
-		clientEl.html(buildHTML(clientid,json.globaltokens));
-	}
-	//da.html(data);
 }
