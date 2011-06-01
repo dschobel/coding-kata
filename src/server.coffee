@@ -101,24 +101,25 @@ app.get('/limiter', (req, res)->
         res.end JSON.stringify response
 )
 
+message_all_clients = (message) ->
+									for socket in sockets
+										socket.send(message)
 
 
 count = 0
-interval_id_by_session_id = {}
+sockets = []
 
 setInterval(-> 
 				count++
-			, 1000)
-app.listen 8000
-socket = io.listen(app)
-socket.on('connection', (client) ->
-							console.log('client connected and initated session ' + client.sessionId)
-							interval_id_by_session_id[client.sessionId] = setInterval( ->
-								client.send('message ' + count + ':hello from the server')
-							,2000)
-							client.on 'message', ->
-								console.log 'client message'
-							client.on 'disconnect', ->
-								console.log 'client disconnected'
-								clearInterval interval_id_by_session_id[client.sessionId]
+				message_all_clients('hello! ' + count)
+			, 2000)
+websocket = io.listen(app)
+websocket.on('connection', (socket) ->
+							sockets.push socket
+							console.log sockets.length + ' clients now connected'
+							socket.on 'disconnect', ->
+								 idx = sockets.indexOf(socket) 
+								 sockets.splice(idx, 1) unless idx == -1
+								 console.log sockets.length + ' clients now connected'
 						)
+app.listen 8000
