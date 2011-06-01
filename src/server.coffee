@@ -81,22 +81,10 @@ console.log "product refill rate will yield a new request every: #{ product_refi
 
 app = express.createServer()
 console.log 'created express server'
-console.log '__dirname is: ' + __dirname 
 app.configure(-> app.use(express.static(__dirname + "../../public")))
 
-count = 0
 
-app.listen 8001
-socket = io.listen(app)
-socket.on('connection', (client) ->
-							setInterval( ->
-								count++
-								client.send('message ' + count + ':hello from the server')
-							,2000))
-
-
-s = http.createServer(
-    (req,res) ->
+app.get('/limiter', (req, res)->
         query = url.parse(req.url, true).query
         if !query.client || !query.product
             res.writeHead 400,
@@ -113,4 +101,24 @@ s = http.createServer(
         res.end JSON.stringify response
 )
 
-s.listen 8000
+
+
+count = 0
+interval_id_by_session_id = {}
+
+setInterval(-> 
+				count++
+			, 1000)
+app.listen 8000
+socket = io.listen(app)
+socket.on('connection', (client) ->
+							console.log('client connected and initated session ' + client.sessionId)
+							interval_id_by_session_id[client.sessionId] = setInterval( ->
+								client.send('message ' + count + ':hello from the server')
+							,2000)
+							client.on 'message', ->
+								console.log 'client message'
+							client.on 'disconnect', ->
+								console.log 'client disconnected'
+								clearInterval interval_id_by_session_id[client.sessionId]
+						)
